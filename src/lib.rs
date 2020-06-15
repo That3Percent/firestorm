@@ -1,14 +1,22 @@
+#[cfg(feature = "enabled")]
 extern crate inferno;
+#[cfg(feature = "enabled")]
 use inferno::flamegraph;
+#[cfg(feature = "enabled")]
 use std::cell::UnsafeCell;
+#[cfg(feature = "enabled")]
 use std::collections::HashMap;
+#[cfg(feature = "enabled")]
 use std::fmt;
+#[cfg(feature = "enabled")]
 use std::time::Instant;
 
 // TODO: Feature to enable, so that all crates that use it are consistently enabled
 
+#[cfg(feature = "enabled")]
 thread_local!(static EVENTS: UnsafeCell<Vec<Event>> = UnsafeCell::new(Vec::with_capacity(2048)));
 
+#[cfg(feature = "enabled")]
 /// Unsafe! This MUST not be used recursively
 /// TODO: Verify in Debug this is not used recursively
 fn with_events<T>(f: impl FnOnce(&mut Vec<Event>) -> T) -> T {
@@ -19,7 +27,7 @@ fn with_events<T>(f: impl FnOnce(&mut Vec<Event>) -> T) -> T {
 }
 
 /// A delayed formatting struct to move allocations out of the loop
-/// This API is likely to change.
+/// This API is likely to change
 #[non_exhaustive]
 pub enum FmtStr {
     Str1(&'static str),
@@ -35,6 +43,7 @@ impl From<&'static str> for FmtStr {
     }
 }
 
+#[cfg(feature = "enabled")]
 impl fmt::Display for FmtStr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -46,6 +55,7 @@ impl fmt::Display for FmtStr {
     }
 }
 
+#[cfg(feature = "enabled")]
 /// A tiny record of a method call which when played back can construct
 /// a profiling state.
 enum Event {
@@ -69,6 +79,7 @@ pub fn start_guard(name: impl Into<FmtStr>) -> impl Drop {
     SpanGuard
 }
 
+#[cfg(feature = "enabled")]
 /// Starts profiling a section. Every start MUST be followed by a corresponding
 /// call to end()
 pub fn start(tag: impl Into<FmtStr>) {
@@ -81,6 +92,11 @@ pub fn start(tag: impl Into<FmtStr>) {
     });
 }
 
+#[cfg(not(feature = "enabled"))]
+#[inline(always)]
+pub fn start(_tag: impl Into<FmtStr>) {}
+
+#[cfg(feature = "enabled")]
 /// Finish profiling a section.
 pub fn end() {
     with_events(|e| {
@@ -90,12 +106,22 @@ pub fn end() {
     });
 }
 
+#[cfg(not(feature = "enabled"))]
+#[inline(always)]
+pub fn end() {}
+
+#[cfg(feature = "enabled")]
 /// Clears all of the recorded info that firestorm has
 /// tracked.
 pub fn clear() {
     with_events(|e| e.clear());
 }
 
+#[cfg(not(feature = "enabled"))]
+#[inline(always)]
+pub fn clear() {}
+
+#[cfg(feature = "enabled")]
 /// Convert events to the format that inferno is expecting
 fn lines() -> Vec<String> {
     with_events(|events| {
@@ -133,6 +159,9 @@ fn lines() -> Vec<String> {
         }
         assert!(stack.is_empty(), "Mimatched start/end");
 
+        //let mut collapsed: Vec<_> = collapsed.iter().collect();
+        //collapsed.sort_by_key(|(_, time)| *time);
+
         collapsed
             .iter()
             .map(|(name, time)| format!("{} {}", name, time))
@@ -141,12 +170,18 @@ fn lines() -> Vec<String> {
 }
 
 /// Write the data to an svg
+#[cfg(feature = "enabled")]
 pub fn to_svg<W: std::io::Write, F: FnOnce() -> W>(f: F) -> Result<(), impl std::error::Error> {
     let lines = lines();
     let mut options = flamegraph::Options {
         count_name: "ns".to_owned(),
-        //reverse_stack_order: false,
+        hash: true,
         ..Default::default()
     };
     flamegraph::from_lines(&mut options, lines.iter().rev().map(|s| s.as_str()), f())
+}
+
+#[cfg(not(feature = "enabled"))]
+pub fn to_svg<W: std::io::Write, F: FnOnce() -> W>(_f: F) -> Result<(), std::convert::Infallible> {
+    Ok(())
 }
