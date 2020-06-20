@@ -241,13 +241,11 @@ pub fn to_svg<W: std::io::Write>(writer: &mut W) -> Result<(), impl std::error::
     drop(f);
     */
 
-    let mut options = flamegraph::Options {
-        count_name: "ns".to_owned(),
-        hash: true,
-        flame_chart: !options.merge,
-        ..Default::default()
-    };
-    flamegraph::from_lines(&mut options, lines.iter().rev().map(|s| s.as_str()), writer)
+    let mut fg_opts = flamegraph::Options::default();
+    fg_opts.count_name = "ns".to_owned();
+    fg_opts.hash = true;
+    fg_opts.flame_chart = !options.merge;
+    flamegraph::from_lines(&mut fg_opts, lines.iter().rev().map(|s| s.as_str()), writer)
 }
 
 #[inline(always)]
