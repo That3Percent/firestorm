@@ -1,6 +1,6 @@
 [package]
 name = "firestorm"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Zac Burns <That3Percent@gmail.com>"]
 edition = "2018"
 license = "MIT"
@@ -10,4 +10,4 @@ description = "A low overhead intrusive flamegraph profiler."
 enabled = ["inferno"]
 
 [dependencies]
-inferno = { version="0.9.9", optional=true }
+inferno = { version="0.10.0", optional=true }
