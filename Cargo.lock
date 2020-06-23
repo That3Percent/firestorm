@@ -200,8 +200,13 @@ dependencies = [
 name = "firestorm"
 version = "0.3.0"
 dependencies = [
+ "firestorm-core",
  "inferno",
 ]
+
+[[package]]
+name = "firestorm-core"
+version = "0.1.0"
 
 [[package]]
 name = "getrandom"
