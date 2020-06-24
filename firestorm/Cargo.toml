@@ -12,3 +12,10 @@ enabled = ["inferno", "firestorm-core"]
 [dependencies]
 inferno = { version="0.10.0", optional=true }
 firestorm-core = { version="0.1.0", optional=true }
+
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "soak_bench"
+harness = false

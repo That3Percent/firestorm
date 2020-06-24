@@ -1,4 +1,6 @@
-pub use firestorm_core::LazyStr;
+use crate::enabled::*;
+use firestorm_core::*;
+pub use firestorm_core::{EventData, Start};
 
 pub struct SpanGuard;
 
@@ -7,4 +9,14 @@ impl Drop for SpanGuard {
     fn drop(&mut self) {
         crate::end();
     }
+}
+
+pub fn start(data: &'static EventData) {
+    with_events(|events| {
+        let event = Event {
+            time: TimeSample::now(),
+            data,
+        };
+        events.push(event);
+    });
 }

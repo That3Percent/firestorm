@@ -1,33 +1,50 @@
-use {
-    crate::internal::*,
-    firestorm_core::*,
-    inferno::flamegraph,
-    std::{
-        collections::HashMap,
-        time::{Duration, Instant},
-    },
-};
+use {firestorm_core::*, inferno::flamegraph, std::collections::HashMap};
 
-// TODO: Consider fancier parsing rules
 #[macro_export]
 macro_rules! profile_fn {
     ($($t:tt)*) => {
-        let _firestorm_fn_guard = { $crate::internal::LazyStr::Func(stringify!($($t:tt)*)) };
+        let _firestorm_fn_guard = {
+            let event_data = &$crate::internal::EventData::Start(
+                $crate::internal::Start::Func {
+                    signature: stringify!($($t)*),
+                }
+            );
+            $crate::internal::start(event_data);
+            $crate::internal::SpanGuard
+        };
     };
 }
 
 #[macro_export]
 macro_rules! profile_method {
     ($($t:tt)*) => {
-        let _firestorm_method_guard = { $crate::internal::LazyStr::Method(::std::any::type_name::<Self>(), stringify!($($t:tt)*)) };
+        let _firestorm_method_guard = {
+            const FIRESTORM_STRUCT_NAME: &'static str = ::std::any::type_name::<Self>();
+            let event_data: &'static _ = &$crate::internal::EventData::Start(
+                $crate::internal::Start::Method {
+                    signature: stringify!($($t)*),
+                    typ: FIRESTORM_STRUCT_NAME,
+                }
+            );
+            $crate::internal::start(event_data);
+            $crate::internal::SpanGuard
+        };
     };
 }
 
-#[inline(always)]
-#[must_use = "Use a let binding to extend the lifetime of the guard to the scope which to profile."]
-pub fn profile_scope(name: &'static str) -> impl Drop {
-    start(LazyStr::Func(name));
-    SpanGuard
+#[macro_export]
+macro_rules! profile_section {
+    ($name:ident) => {
+        #[allow(unused_variables)]
+        let $name = {
+            let event_data =
+                &$crate::internal::EventData::Start($crate::internal::Start::Section {
+                    name: stringify!($name),
+                });
+            $crate::internal::start(event_data);
+            $crate::internal::SpanGuard
+        };
+    };
 }
 
 /// Clears all of the recorded info that firestorm has tracked in this thread.
@@ -40,49 +57,64 @@ fn lines(options: &Options) -> Vec<String> {
     with_events(|events| {
         struct Frame {
             name: String,
-            start: Instant,
+            start: TimeSample,
         }
         struct Line {
             name: String,
-            time: u128,
+            duration: u64,
         }
 
-        fn push_line(lines: &mut Vec<Line>, name: String, duration: Duration) {
-            let time = duration.as_nanos();
+        fn push_line(lines: &mut Vec<Line>, name: String, duration: u64) {
             if let Some(prev) = lines.last_mut() {
                 if &prev.name == &name {
-                    prev.time += time;
+                    prev.duration += duration;
                     return;
                 }
             }
-            lines.push(Line { name, time });
+            lines.push(Line { name, duration });
         }
 
         let mut stack = Vec::<Frame>::new();
-        let mut collapsed = HashMap::<_, u128>::new();
+        let mut collapsed = HashMap::<_, u64>::new();
         let mut lines = Vec::<Line>::new();
 
         for event in events.iter() {
-            match event {
-                Event::Start { time, tag } => {
-                    let mut name = format!("{}", tag).replace(";", "").replace(" ", "_");
+            let time = event.time;
+            match event.data {
+                EventData::Start(tag) => {
+                    let mut s = String::new();
+                    match tag {
+                        Start::Method { typ, signature } => {
+                            s += typ;
+                            s += "::";
+                            s += signature;
+                        }
+                        Start::Func { signature } => {
+                            s += signature;
+                        }
+                        Start::Section { name } => {
+                            s += name;
+                        }
+                        _ => s += "Unsupported",
+                    }
+                    // Characters which are not supported by inferno
+                    s = s.replace(";", "").replace(" ", "");
                     if let Some(parent) = stack.last() {
-                        name = format!("{};{}", &parent.name, name);
+                        s = format!("{};{}", &parent.name, s);
                         if !options.merge {
-                            push_line(&mut lines, name.clone(), *time - parent.start);
+                            push_line(&mut lines, s.clone(), time - parent.start);
                         }
                     }
                     let frame = Frame {
-                        name: name,
-                        start: *time,
+                        name: s,
+                        start: time,
                     };
                     stack.push(frame);
                 }
-                Event::End { time } => {
+                EventData::End => {
                     let Frame { name, start } = stack.pop().unwrap();
-                    let elapsed = *time - start;
+                    let elapsed = time - start;
                     if options.merge {
-                        let elapsed = elapsed.as_nanos();
                         let entry = collapsed.entry(name).or_default();
                         *entry = entry.wrapping_add(elapsed);
                         if let Some(parent) = stack.last() {
@@ -92,37 +124,40 @@ fn lines(options: &Options) -> Vec<String> {
                     } else {
                         push_line(&mut lines, name, elapsed);
                         if let Some(parent) = stack.last_mut() {
-                            parent.start = *time;
+                            parent.start = time;
                         }
                     }
                 }
+                _ => panic!("Unsupported event data. Update Firestorm."),
             }
         }
         assert!(stack.is_empty(), "Mimatched start/end");
 
-        fn format_line(name: &str, time: &u128) -> Option<String> {
-            if *time == 0 {
+        fn format_line(name: &str, duration: &u64) -> Option<String> {
+            if *duration == 0 {
                 None
             } else {
-                Some(format!("{} {}", name, time))
+                Some(format!("{} {}", name, duration))
             }
         }
 
         if options.merge {
             collapsed
                 .iter()
-                .filter_map(|(name, time)| format_line(name, time))
+                .filter_map(|(name, duration)| format_line(name, duration))
                 .collect()
         } else {
             lines
                 .iter()
-                .filter_map(|Line { name, time }| format_line(name, time))
+                .filter_map(|Line { name, duration }| format_line(name, duration))
                 .collect()
         }
     })
 }
 
 /// This API is unstable, and will likely go away
+/// Ultimately it would be best to output a webpage with
+/// both the merged/unmerged outputs to show
 #[derive(Default)]
 struct Options {
     /// Merges all instances of the same stack into a single bar.
@@ -159,32 +194,19 @@ pub fn to_svg<W: std::io::Write>(writer: &mut W) -> Result<(), impl std::error::
 
 /// Finish profiling a section.
 pub(crate) fn end() {
-    with_events(|e| {
-        e.push(Event::End {
-            time: Instant::now(),
+    with_events(|events| {
+        events.push(Event {
+            time: TimeSample::now(),
+            data: &EventData::End,
         })
     });
 }
 
 /// Unsafe! This MUST not be used recursively
 /// TODO: Verify in Debug this is not used recursively
-fn with_events<T>(f: impl FnOnce(&mut Vec<Event>) -> T) -> T {
+pub(crate) fn with_events<T>(f: impl FnOnce(&mut Vec<Event>) -> T) -> T {
     EVENTS.with(|e| {
         let r = unsafe { &mut *e.get() };
         f(r)
     })
-}
-
-
-
-/// Starts profiling a section. Every start MUST be followed by a corresponding
-/// call to end()
-pub(crate) fn start(tag: LazyStr) {
-    with_events(|events| {
-        let event = Event::Start {
-            time: Instant::now(),
-            tag,
-        };
-        events.push(event);
-    });
 }
