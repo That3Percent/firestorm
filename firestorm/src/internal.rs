@@ -11,7 +11,7 @@ impl Drop for SpanGuard {
     }
 }
 
-pub fn start(data: &'static EventData) {
+pub fn start(data: EventData) {
     with_events(|events| {
         let event = Event {
             time: TimeSample::now(),

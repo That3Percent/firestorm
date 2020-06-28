@@ -1,7 +1,9 @@
 #![feature(const_type_name)]
 
+extern crate core_affinity;
 use criterion::{criterion_group, criterion_main, Criterion};
 use firestorm::*;
+use thread_priority::{set_current_thread_priority, ThreadPriority};
 
 fn loop_100() {
     profile_fn!(loop_20());
@@ -56,6 +58,9 @@ fn outer() {
 }
 
 pub fn criterion_benchmark(c: &mut Criterion) {
+    let core_ids = core_affinity::get_core_ids().unwrap();
+    core_affinity::set_for_current(core_ids[0]);
+    assert!(set_current_thread_priority(ThreadPriority::Max).is_ok());
     c.bench_function("soak", |b| {
         b.iter(|| {
             outer();

@@ -4,9 +4,9 @@ use {firestorm_core::*, inferno::flamegraph, std::collections::HashMap};
 macro_rules! profile_fn {
     ($($t:tt)*) => {
         let _firestorm_fn_guard = {
-            let event_data = &$crate::internal::EventData::Start(
+            let event_data = $crate::internal::EventData::Start(
                 $crate::internal::Start::Func {
-                    signature: stringify!($($t)*),
+                    signature: &stringify!($($t)*),
                 }
             );
             $crate::internal::start(event_data);
@@ -19,11 +19,10 @@ macro_rules! profile_fn {
 macro_rules! profile_method {
     ($($t:tt)*) => {
         let _firestorm_method_guard = {
-            const FIRESTORM_STRUCT_NAME: &'static str = ::std::any::type_name::<Self>();
-            let event_data: &'static _ = &$crate::internal::EventData::Start(
+            let event_data = $crate::internal::EventData::Start(
                 $crate::internal::Start::Method {
-                    signature: stringify!($($t)*),
-                    typ: FIRESTORM_STRUCT_NAME,
+                    signature: &stringify!($($t)*),
+                    typ: ::std::any::type_name::<Self>(),
                 }
             );
             $crate::internal::start(event_data);
@@ -37,10 +36,9 @@ macro_rules! profile_section {
     ($name:ident) => {
         #[allow(unused_variables)]
         let $name = {
-            let event_data =
-                &$crate::internal::EventData::Start($crate::internal::Start::Section {
-                    name: stringify!($name),
-                });
+            let event_data = $crate::internal::EventData::Start($crate::internal::Start::Section {
+                name: &stringify!($name),
+            });
             $crate::internal::start(event_data);
             $crate::internal::SpanGuard
         };
@@ -80,7 +78,7 @@ fn lines(options: &Options) -> Vec<String> {
 
         for event in events.iter() {
             let time = event.time;
-            match event.data {
+            match &event.data {
                 EventData::Start(tag) => {
                     let mut s = String::new();
                     match tag {
@@ -186,7 +184,7 @@ pub fn to_svg<W: std::io::Write>(writer: &mut W) -> Result<(), impl std::error::
     */
 
     let mut fg_opts = flamegraph::Options::default();
-    fg_opts.count_name = "ns".to_owned();
+    fg_opts.count_name = "".to_owned();
     fg_opts.hash = true;
     fg_opts.flame_chart = !options.merge;
     flamegraph::from_lines(&mut fg_opts, lines.iter().rev().map(|s| s.as_str()), writer)
@@ -197,7 +195,7 @@ pub(crate) fn end() {
     with_events(|events| {
         events.push(Event {
             time: TimeSample::now(),
-            data: &EventData::End,
+            data: EventData::End,
         })
     });
 }
