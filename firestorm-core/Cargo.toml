@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Zac Burns <That3Percent@gmail.com>"]
 edition = "2018"
 license = "MIT"
+description = "Internals for firestorm"
 
 [features]
 system_time = []
