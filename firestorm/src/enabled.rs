@@ -163,6 +163,7 @@ struct Options {
     /// time a method took. But, will not retain information like how
     /// many times a method was called.
     pub merge: bool,
+    // TODO: own_time - shows sortest own time list like a bar graph on it's side
     _priv: (),
 }
 

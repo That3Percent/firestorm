@@ -1,3 +1,10 @@
+//! The idea of firestorm-core  was to try to make a small API subset so that multiple
+//! versions of firestorm with the potential for backward incompatable API changes
+//! between them could share common data so that profiling all dependencies would
+//! still work. This probably fell short, but it's a step toward that.
+// TODO: The main problem about the above is that multiple dependencies would not be enabled.
+// So, even the enable/disable re-export paradigm has to come from this crate.
+
 use std::cell::UnsafeCell;
 
 // The TimeSample type exists to make time opaque for backward compatability.
