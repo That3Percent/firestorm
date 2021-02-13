@@ -3,6 +3,8 @@ name = "firestorm-enabled"
 version = "0.4.0"
 authors = ["Zac Burns <That3Percent@gmail.com>"]
 edition = "2018"
+license = "MIT"
+description = "A dependency of firestorm. Do not use directly."
 
 [features]
 cpu_time = ["firestorm-core/cpu_time"]
