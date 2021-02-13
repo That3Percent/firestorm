@@ -1,8 +1,10 @@
 [workspace]
 members = [
     "firestorm",
+    "firestorm-enabled",
     "firestorm-core",
 ]
 
 [patch.crates-io]
-#firestorm-core = { path = "firestorm-core" }
+firestorm-core = { path = "firestorm-core" }
+firestorm-enabled = { path = "firestorm-enabled" }

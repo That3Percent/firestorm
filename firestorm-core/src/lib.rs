@@ -24,6 +24,11 @@ mod system_time;
 #[cfg(feature = "system_time")]
 pub use system_time::*;
 
+#[cfg(not(any(feature = "system_time", feature = "cpu_time")))]
+mod disabled;
+#[cfg(not(any(feature = "system_time", feature = "cpu_time")))]
+pub use disabled::*;
+
 type Str = &'static &'static str;
 
 // TODO: Add Pause, Resume to help with things like the
@@ -49,11 +54,10 @@ pub enum EventData {
 /// Ideally, data would be an &'static EventData to avoid writing more data
 /// than is necessary but limitations in the Rust compiler prevent this.
 pub struct Event {
-    #[cfg(any(feature = "system_time", feature = "cpu_time"))]
     pub time: TimeSample,
     pub data: EventData,
 }
 
 // Having a large capacity here buys some time before having to implement Pause/Resume capabilities to hide
-// the time spent in expanding the array.
+// the time spent in expanding the array. It may be a good idea to have the core API do a warmup and clear.
 thread_local!(pub static EVENTS: UnsafeCell<Vec<Event>> = UnsafeCell::new(Vec::with_capacity(8192)));

@@ -1,3 +1,7 @@
+pub mod internal {
+    pub struct SpanGuard;
+}
+
 #[macro_export]
 macro_rules! profile_fn {
     ($($t:tt)*) => {};
@@ -12,7 +16,7 @@ macro_rules! profile_method {
 macro_rules! profile_section {
     ($name:ident) => {
         #[allow(unused_variables)]
-        let $name = ();
+        let $name = $crate::internal::SpanGuard;
     };
 }
 
@@ -22,4 +26,10 @@ pub fn clear() {}
 #[inline(always)]
 pub fn to_svg<W: std::io::Write>(_writer: &mut W) -> Result<(), std::convert::Infallible> {
     Ok(())
+}
+
+/// Returns whether or not firestorm is enabled
+#[inline(always)]
+pub const fn enabled() -> bool {
+    false
 }

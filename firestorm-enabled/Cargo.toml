@@ -1,0 +1,13 @@
+[package]
+name = "firestorm-enabled"
+version = "0.3.1"
+authors = ["Zac Burns <That3Percent@gmail.com>"]
+edition = "2018"
+
+[features]
+cpu_time = ["firestorm-core/cpu_time"]
+system_time = ["firestorm-core/system_time"]
+
+[dependencies]
+inferno = "0.10"
+firestorm-core = "0.1"

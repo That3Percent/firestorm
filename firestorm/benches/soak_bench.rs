@@ -1,4 +1,4 @@
-#![feature(const_type_name)]
+// TODO: Move to another crate
 
 extern crate core_affinity;
 use criterion::{criterion_group, criterion_main, Criterion};
@@ -9,6 +9,7 @@ fn loop_100() {
     profile_fn!(loop_20());
     for _ in 0..100 {
         profile_section!(inner);
+        drop(inner);
     }
 }
 

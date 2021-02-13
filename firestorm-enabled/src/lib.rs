@@ -1,4 +1,7 @@
+extern crate inferno;
+
 use {firestorm_core::*, inferno::flamegraph, std::collections::HashMap};
+pub mod internal;
 
 #[macro_export]
 macro_rules! profile_fn {
@@ -50,8 +53,32 @@ pub fn clear() {
     with_events(|e| e.clear());
 }
 
+fn inferno_valid_chars(s: &str) -> String {
+    s.replace(";", "").replace(" ", "")
+}
+
+fn format_start(tag: &Start) -> String {
+    let mut s = String::new();
+    match tag {
+        Start::Method { typ, signature } => {
+            s += typ;
+            s += "::";
+            s += signature;
+        }
+        Start::Func { signature } => {
+            s += signature;
+        }
+        Start::Section { name } => {
+            s += name;
+        }
+        _ => s += "Unsupported",
+    }
+    s
+}
+
 /// Convert events to the format that inferno is expecting
 fn lines(options: &Options) -> Vec<String> {
+    let mode = options.mode;
     with_events(|events| {
         struct Frame {
             name: String,
@@ -75,31 +102,19 @@ fn lines(options: &Options) -> Vec<String> {
         let mut stack = Vec::<Frame>::new();
         let mut collapsed = HashMap::<_, u64>::new();
         let mut lines = Vec::<Line>::new();
+        //let mut own_times = HashMap::<String, u64>::new();
 
         for event in events.iter() {
             let time = event.time;
             match &event.data {
                 EventData::Start(tag) => {
-                    let mut s = String::new();
-                    match tag {
-                        Start::Method { typ, signature } => {
-                            s += typ;
-                            s += "::";
-                            s += signature;
-                        }
-                        Start::Func { signature } => {
-                            s += signature;
-                        }
-                        Start::Section { name } => {
-                            s += name;
-                        }
-                        _ => s += "Unsupported",
-                    }
-                    // Characters which are not supported by inferno
-                    s = s.replace(";", "").replace(" ", "");
+                    let mut s = format_start(tag);
+                    s = inferno_valid_chars(&s);
                     if let Some(parent) = stack.last() {
-                        s = format!("{};{}", &parent.name, s);
-                        if !options.merge {
+                        if !matches!(mode, Mode::OwnTime) {
+                            s = format!("{};{}", &parent.name, s);
+                        }
+                        if mode == Mode::TimeAxis {
                             push_line(&mut lines, s.clone(), time - parent.start);
                         }
                     }
@@ -112,17 +127,20 @@ fn lines(options: &Options) -> Vec<String> {
                 EventData::End => {
                     let Frame { name, start } = stack.pop().unwrap();
                     let elapsed = time - start;
-                    if options.merge {
-                        let entry = collapsed.entry(name).or_default();
-                        *entry = entry.wrapping_add(elapsed);
-                        if let Some(parent) = stack.last() {
-                            let entry = collapsed.entry(parent.name.clone()).or_default();
-                            *entry = entry.wrapping_sub(elapsed);
+                    match mode {
+                        Mode::Merged | Mode::OwnTime => {
+                            let entry = collapsed.entry(name).or_default();
+                            *entry = entry.wrapping_add(elapsed);
+                            if let Some(parent) = stack.last() {
+                                let entry = collapsed.entry(parent.name.clone()).or_default();
+                                *entry = entry.wrapping_sub(elapsed);
+                            }
                         }
-                    } else {
-                        push_line(&mut lines, name, elapsed);
-                        if let Some(parent) = stack.last_mut() {
-                            parent.start = time;
+                        Mode::TimeAxis => {
+                            push_line(&mut lines, name, elapsed);
+                            if let Some(parent) = stack.last_mut() {
+                                parent.start = time;
+                            }
                         }
                     }
                 }
@@ -139,18 +157,44 @@ fn lines(options: &Options) -> Vec<String> {
             }
         }
 
-        if options.merge {
-            collapsed
+        match mode {
+            Mode::Merged => collapsed
                 .iter()
                 .filter_map(|(name, duration)| format_line(name, duration))
-                .collect()
-        } else {
-            lines
+                .collect(),
+            Mode::TimeAxis => lines
                 .iter()
                 .filter_map(|Line { name, duration }| format_line(name, duration))
-                .collect()
+                .collect(),
+            Mode::OwnTime => {
+                let mut collapsed: Vec<_> = collapsed.into_iter().collect();
+                collapsed.sort_by_key(|l| l.1);
+                collapsed
+                    .iter()
+                    .filter_map(|(name, duration)| format_line(name, duration))
+                    .collect()
+            }
         }
     })
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+enum Mode {
+    TimeAxis,
+    /// Merges all instances of the same stack into a single bar.
+    /// This may give a better overview of, for example, how much total
+    /// time a method took. But, will not retain information like how
+    /// many times a method was called.
+    Merged,
+    /// The stacks have nothing to do with callstacks, this is just a
+    /// bar graph on it's side.
+    OwnTime,
+}
+
+impl Default for Mode {
+    fn default() -> Self {
+        Self::TimeAxis
+    }
 }
 
 /// This API is unstable, and will likely go away
@@ -158,18 +202,14 @@ fn lines(options: &Options) -> Vec<String> {
 /// both the merged/unmerged outputs to show
 #[derive(Default)]
 struct Options {
-    /// Merges all instances of the same stack into a single bar.
-    /// This may give a better overview of, for example, how much total
-    /// time a method took. But, will not retain information like how
-    /// many times a method was called.
-    pub merge: bool,
-    // TODO: own_time - shows sortest own time list like a bar graph on it's side
+    mode: Mode,
     _priv: (),
 }
 
 /// Write the data to an svg
 pub fn to_svg<W: std::io::Write>(writer: &mut W) -> Result<(), impl std::error::Error> {
-    let options = Default::default();
+    let mut options = Options::default();
+    //options.mode = Mode::OwnTime;
 
     let lines = lines(&options);
 
@@ -187,7 +227,7 @@ pub fn to_svg<W: std::io::Write>(writer: &mut W) -> Result<(), impl std::error::
     let mut fg_opts = flamegraph::Options::default();
     fg_opts.count_name = "".to_owned();
     fg_opts.hash = true;
-    fg_opts.flame_chart = !options.merge;
+    fg_opts.flame_chart = matches!(options.mode, Mode::TimeAxis);
     flamegraph::from_lines(&mut fg_opts, lines.iter().rev().map(|s| s.as_str()), writer)
 }
 
@@ -208,4 +248,10 @@ pub(crate) fn with_events<T>(f: impl FnOnce(&mut Vec<Event>) -> T) -> T {
         let r = unsafe { &mut *e.get() };
         f(r)
     })
+}
+
+/// Returns whether or not firestorm is enabled
+#[inline(always)]
+pub const fn enabled() -> bool {
+    true
 }

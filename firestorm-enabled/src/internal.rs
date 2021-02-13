@@ -1,5 +1,4 @@
-use crate::enabled::*;
-use firestorm_core::*;
+use crate::*;
 pub use firestorm_core::{EventData, Start};
 
 pub struct SpanGuard;

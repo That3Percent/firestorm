@@ -315,12 +315,11 @@ dependencies = [
 
 [[package]]
 name = "firestorm"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "core_affinity",
  "criterion",
- "firestorm-core",
- "inferno",
+ "firestorm-enabled",
  "thread-priority",
 ]
 
@@ -329,6 +328,14 @@ name = "firestorm-core"
 version = "0.1.0"
 dependencies = [
  "amd64_timer",
+]
+
+[[package]]
+name = "firestorm-enabled"
+version = "0.3.1"
+dependencies = [
+ "firestorm-core",
+ "inferno",
 ]
 
 [[package]]
