@@ -1,3 +1,16 @@
+// The backwards compatability policy:
+// When core needs to change:
+//    It can release a new version
+//    And every point release of previous APIs can be upgraded to use it.
+//    So long as exact versions are never relied upon this should work.
+//
+// When a new version comes out, it needs to enable the previous version
+//    (which happens recursively)
+//    It would be good if this only brought in the profiling part and not
+//    the drawing part, but I can fix that later.
+
+use std::{error::Error, fs::create_dir_all, io::Write, path::Path};
+
 extern crate inferno;
 
 use {firestorm_core::*, inferno::flamegraph, std::collections::HashMap};
@@ -77,8 +90,7 @@ fn format_start(tag: &Start) -> String {
 }
 
 /// Convert events to the format that inferno is expecting
-fn lines(options: &Options) -> Vec<String> {
-    let mode = options.mode;
+fn lines(mode: Mode) -> Vec<String> {
     with_events(|events| {
         struct Frame {
             name: String,
@@ -102,7 +114,6 @@ fn lines(options: &Options) -> Vec<String> {
         let mut stack = Vec::<Frame>::new();
         let mut collapsed = HashMap::<_, u64>::new();
         let mut lines = Vec::<Line>::new();
-        //let mut own_times = HashMap::<String, u64>::new();
 
         for event in events.iter() {
             let time = event.time;
@@ -191,44 +202,50 @@ enum Mode {
     OwnTime,
 }
 
-impl Default for Mode {
-    fn default() -> Self {
-        Self::TimeAxis
+/// Save the flamegraph to a folder.
+pub fn save<P: AsRef<Path>>(path: P) -> Result<(), Box<dyn Error>> {
+    let data_dir = path.as_ref().join("flamegraph");
+    create_dir_all(&data_dir)?;
+    for (mode, name) in [
+        (Mode::OwnTime, "owntime"),
+        (Mode::TimeAxis, "timeaxis"),
+        (Mode::Merged, "merged"),
+    ]
+    .iter()
+    {
+        let lines = lines(*mode);
+
+        /*
+        // Output lines for debugging
+        use std::io::Write;
+        let mut f = std::fs::File::create("C:\\git\\flames.txt")?;
+        for line in lines.iter() {
+            f.write(line.as_bytes())?;
+            f.write("\n".as_bytes())?;
+        }
+        drop(f);
+        */
+
+        let mut fg_opts = flamegraph::Options::default();
+        fg_opts.count_name = "".to_owned();
+        fg_opts.title = "".to_owned();
+        fg_opts.hash = true;
+        fg_opts.flame_chart = matches!(mode, Mode::TimeAxis);
+        let name = data_dir.join(name.to_string() + ".svg");
+        let mut writer = std::fs::File::create(name)?;
+        flamegraph::from_lines(
+            &mut fg_opts,
+            lines.iter().rev().map(|s| s.as_str()),
+            &mut writer,
+        )?;
     }
-}
 
-/// This API is unstable, and will likely go away
-/// Ultimately it would be best to output a webpage with
-/// both the merged/unmerged outputs to show
-#[derive(Default)]
-struct Options {
-    mode: Mode,
-    _priv: (),
-}
+    let name = path.as_ref().join("flamegraph.html");
+    let mut writer = std::fs::File::create(name)?;
+    let html = include_bytes!("flamegraph.html");
+    writer.write_all(html)?;
 
-/// Write the data to an svg
-pub fn to_svg<W: std::io::Write>(writer: &mut W) -> Result<(), impl std::error::Error> {
-    let mut options = Options::default();
-    //options.mode = Mode::OwnTime;
-
-    let lines = lines(&options);
-
-    /*
-    // Output lines for debugging
-    use std::io::Write;
-    let mut f = std::fs::File::create("C:\\git\\flames.txt").unwrap();
-    for line in lines.iter() {
-        f.write(line.as_bytes()).unwrap();
-        f.write("\n".as_bytes()).unwrap();
-    }
-    drop(f);
-    */
-
-    let mut fg_opts = flamegraph::Options::default();
-    fg_opts.count_name = "".to_owned();
-    fg_opts.hash = true;
-    fg_opts.flame_chart = matches!(options.mode, Mode::TimeAxis);
-    flamegraph::from_lines(&mut fg_opts, lines.iter().rev().map(|s| s.as_str()), writer)
+    Ok(())
 }
 
 /// Finish profiling a section.

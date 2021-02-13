@@ -1,17 +1,19 @@
 [package]
 name = "firestorm"
-version = "0.3.1"
+version = "0.4.0"
 authors = ["Zac Burns <That3Percent@gmail.com>"]
 edition = "2018"
 license = "MIT"
 description = "A low overhead intrusive flamegraph profiler."
 
 [features]
-enable_cpu_time = ["firestorm-enabled/cpu_time"]
-enable_system_time = ["firestorm-enabled/system_time"]
+# cpu_time works on nightly, but not sure I want the headache yet.
+#enable_cpu_time = ["firestorm-enabled/cpu_time", "firestorm/enable_cpu_time"]
+enable_system_time = ["firestorm-enabled/system_time", "firestorm/enable_system_time"]
 
 [dependencies]
-firestorm-enabled = { version="0.3.1", optional=true }
+firestorm-enabled = { version="0.4", optional=true }
+firestorm = { version="0.3", optional=true }
 
 [dev-dependencies]
 criterion = "0.3"

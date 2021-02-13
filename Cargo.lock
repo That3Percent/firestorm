@@ -315,24 +315,35 @@ dependencies = [
 
 [[package]]
 name = "firestorm"
-version = "0.3.1"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "43f6be9bb093e6d65598c7f1becaf3d3f54f22adc12833b9c603c12696691d3e"
+dependencies = [
+ "firestorm-core",
+ "inferno",
+]
+
+[[package]]
+name = "firestorm"
+version = "0.4.0"
 dependencies = [
  "core_affinity",
  "criterion",
+ "firestorm 0.3.0",
  "firestorm-enabled",
  "thread-priority",
 ]
 
 [[package]]
 name = "firestorm-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "amd64_timer",
 ]
 
 [[package]]
 name = "firestorm-enabled"
-version = "0.3.1"
+version = "0.4.0"
 dependencies = [
  "firestorm-core",
  "inferno",

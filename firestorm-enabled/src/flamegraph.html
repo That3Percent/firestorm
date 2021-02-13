@@ -1,0 +1,22 @@
+<!-- I don't know any HTML. Don't judge, make a PR. -->
+<label for="mode">Mode:</label>
+<select id="mode" onChange="javascript:swap()">
+    <option>Time Axis</option>
+    <option>Merged</option>
+    <option>Own Time</option>
+</select>
+<br><br>
+
+<object id="timeaxis" type="image/svg+xml" data="./flamegraph/timeaxis.svg" style="width:100vw; height:100vh;"></object>
+<object id="merged" type="image/svg+xml" data="./flamegraph/merged.svg" style="width:100vw;height: 100vh;"></object>
+<object id="owntime" type="image/svg+xml" data="./flamegraph/owntime.svg" style="width:100vw; height: 100vh;"></object>
+
+<script>
+    function swap() {
+        let select = document.getElementById("mode");
+        document.getElementById('timeaxis').hidden = (select.selectedIndex !== 0);
+        document.getElementById('merged').hidden = (select.selectedIndex !== 1);
+        document.getElementById('owntime').hidden = (select.selectedIndex !== 2);
+    }
+    swap();
+</script>
