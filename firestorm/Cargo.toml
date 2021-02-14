@@ -5,6 +5,8 @@ authors = ["Zac Burns <That3Percent@gmail.com>"]
 edition = "2018"
 license = "MIT"
 description = "A low overhead intrusive flamegraph profiler."
+keywords = ["flamegraph", "profiler"]
+categories = ["development-tools::profiling"]
 
 [features]
 # cpu_time works on nightly, but not sure I want the headache yet.
