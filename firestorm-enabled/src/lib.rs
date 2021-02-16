@@ -214,7 +214,7 @@ enum Mode {
 
 /// Save the flamegraph to a folder.
 pub fn save<P: AsRef<Path>>(path: P) -> Result<(), Box<dyn Error>> {
-    let data_dir = path.as_ref().join("flamegraph");
+    let data_dir = path.as_ref().join("firestorm");
     create_dir_all(&data_dir)?;
     for (mode, name) in [
         (Mode::OwnTime, "owntime"),
@@ -250,9 +250,9 @@ pub fn save<P: AsRef<Path>>(path: P) -> Result<(), Box<dyn Error>> {
         )?;
     }
 
-    let name = path.as_ref().join("flamegraph.html");
+    let name = path.as_ref().join("firestorm.html");
     let mut writer = std::fs::File::create(name)?;
-    let html = include_bytes!("flamegraph.html");
+    let html = include_bytes!("firestorm.html");
     writer.write_all(html)?;
 
     Ok(())
