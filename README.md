@@ -42,8 +42,9 @@ Lastly, invoke the macros in your functions.
 
 ```rust
 fn fn_name<T>(param: T) {
-    // You can optionally add generic parameters
-    profile_function!(T, fn_name);
+    // Call profile_fn at the top of your function, specifying the function name.
+    // You can optionally add generic parameters, too
+    profile_fn!(T, fn_name);
 
     // If a function is complex, profile a section.
     {
@@ -78,16 +79,16 @@ To enable profiling, Firestorm needs an additional feature specified in `Cargo.t
 firestorm = { version="0.4", features=["enable_system_time"] }
 ```
 
-Run the bench and save the result:
+Profile the session and save the result:
 
 ```rust
 // Do a warmup. This will pre-allocate
 // memory needed for sampling with Firestorm.
-bench();
+instrumented_function();
 // Clear samples taken during warmup.
 firestorm::clear();
-// Run the bench for real.
-bench();
+// Run the function again, this time "for real".
+instrumented_function();
 // Save the data. Make sure this is an empty
 // directory so that no important files are overwritten.
 firestorm::save("./").unwrap();
