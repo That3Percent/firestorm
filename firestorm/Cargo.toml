@@ -1,6 +1,6 @@
 [package]
 name = "firestorm"
-version = "0.4.1"
+version = "0.4.2"
 authors = ["Zac Burns <That3Percent@gmail.com>"]
 edition = "2018"
 license = "MIT"
@@ -8,6 +8,7 @@ description = "A low overhead intrusive flamegraph profiler."
 keywords = ["flamegraph", "profiler"]
 categories = ["development-tools::profiling"]
 repository = "https://github.com/That3Percent/firestorm"
+readme = "../README.md"
 
 [features]
 # cpu_time works on nightly, but not sure I want the headache yet.
