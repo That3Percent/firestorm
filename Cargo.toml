@@ -3,8 +3,10 @@ members = [
     "firestorm",
     "firestorm-enabled",
     "firestorm-core",
+    "tests"
 ]
 
 [patch.crates-io]
+firestorm = { path = "firestorm" }
 firestorm-core = { path = "firestorm-core" }
 firestorm-enabled = { path = "firestorm-enabled" }
