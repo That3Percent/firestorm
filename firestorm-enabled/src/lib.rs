@@ -101,16 +101,6 @@ fn lines(mode: Mode) -> Vec<String> {
             duration: u64,
         }
 
-        fn push_line(lines: &mut Vec<Line>, name: String, duration: u64) {
-            if let Some(prev) = lines.last_mut() {
-                if &prev.name == &name {
-                    prev.duration += duration;
-                    return;
-                }
-            }
-            lines.push(Line { name, duration });
-        }
-
         let mut stack = Vec::<Frame>::new();
         let mut collapsed = HashMap::<_, u64>::new();
         let mut lines = Vec::<Line>::new();
@@ -126,7 +116,10 @@ fn lines(mode: Mode) -> Vec<String> {
                             s = format!("{};{}", &parent.name, s);
                         }
                         if mode == Mode::TimeAxis {
-                            push_line(&mut lines, s.clone(), time - parent.start);
+                            lines.push(Line {
+                                name: parent.name.clone(),
+                                duration: time - parent.start,
+                            });
                         }
                     }
                     let frame = Frame {
@@ -148,7 +141,10 @@ fn lines(mode: Mode) -> Vec<String> {
                             }
                         }
                         Mode::TimeAxis => {
-                            push_line(&mut lines, name, elapsed);
+                            lines.push(Line {
+                                name,
+                                duration: elapsed,
+                            });
                             if let Some(parent) = stack.last_mut() {
                                 parent.start = time;
                             }
