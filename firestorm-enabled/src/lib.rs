@@ -183,6 +183,11 @@ fn lines(mode: Mode) -> Vec<String> {
                     .filter(|(_, duration)| *duration != 0)
                     .collect();
                 collapsed.sort_by_key(|(_, duration)| u64::MAX - *duration);
+
+                for i in 1..collapsed.len() {
+                    collapsed[i - 1].1 -= collapsed[i].1;
+                }
+
                 let mut collapsed = collapsed.into_iter();
                 let mut lines = Vec::new();
                 if let Some(item) = collapsed.next() {
