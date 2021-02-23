@@ -82,18 +82,11 @@ firestorm = { version="0.4", features=["enable_system_time"] }
 Profile the session and save the result:
 
 ```rust
-// Do a warmup. This will pre-allocate
-// memory needed for sampling with Firestorm.
-instrumented_function();
-// Clear samples taken during warmup.
-firestorm::clear();
-// Run the function again, this time "for real".
-instrumented_function();
-// Save the data. Make sure this is an empty
-// directory so that no important files are overwritten.
-firestorm::save("./").unwrap();
-// Maybe Firestorm should put this pattern in a
-// utility function in the next minor release.
+// Runs the function and saves the flamegraph to the supplied directory.
+// Make sure this is an empty directory so that no important files are overwritten.
+if firestorm::enabled() {
+    firestorm::bench("./flames/", instrumented_function).unwrap();
+}
 ```
 
 After running the above, there will be a `firestorm.html` in the target directory and a `/firestorm` subdirectory with supporting files. Open `firestorm.html` to view the results.

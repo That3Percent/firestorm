@@ -287,3 +287,12 @@ pub(crate) fn with_events<T>(f: impl FnOnce(&mut Vec<Event>) -> T) -> T {
 pub const fn enabled() -> bool {
     true
 }
+
+pub fn bench<F: Fn(), P: AsRef<Path>>(path: P, f: F) -> Result<(), Box<dyn Error>> {
+    // Warmup - pre-allocates memory for samples
+    f();
+    clear();
+
+    f();
+    save(path)
+}

@@ -36,3 +36,7 @@ pub fn save<P: AsRef<Path>>(_path: P) -> Result<(), Box<dyn Error>> {
 pub const fn enabled() -> bool {
     false
 }
+
+pub fn bench<F: Fn(), P: AsRef<Path>>(path: P, f: F) -> Result<(), Box<dyn Error>> {
+    Err("Firestorm not enabled")?
+}
