@@ -226,16 +226,14 @@ pub fn save<P: AsRef<Path>>(path: P) -> Result<(), Box<dyn Error>> {
     {
         let lines = lines(*mode);
 
-        /*
         // Output lines for debugging
         use std::io::Write;
-        let mut f = std::fs::File::create("C:\\git\\flames.txt")?;
+        let mut f = std::fs::File::create(format!("C:\\git\\{}.txt", &name))?;
         for line in lines.iter() {
             f.write(line.as_bytes())?;
             f.write("\n".as_bytes())?;
         }
         drop(f);
-        */
 
         let mut fg_opts = flamegraph::Options::default();
         fg_opts.count_name = "".to_owned();

@@ -26,7 +26,6 @@ macro_rules! profile_section {
 #[inline(always)]
 pub fn clear() {}
 
-#[inline(always)]
 pub fn save<P: AsRef<Path>>(_path: P) -> Result<(), Box<dyn Error>> {
     Err("Firestorm not enabled")?
 }
