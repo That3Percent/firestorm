@@ -36,6 +36,6 @@ pub const fn enabled() -> bool {
     false
 }
 
-pub fn bench<F: Fn(), P: AsRef<Path>>(path: P, f: F) -> Result<(), Box<dyn Error>> {
+pub fn bench<F: Fn(), P: AsRef<Path>>(_path: P, _f: F) -> Result<(), Box<dyn Error>> {
     Err("Firestorm not enabled")?
 }
