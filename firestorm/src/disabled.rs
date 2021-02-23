@@ -1,3 +1,6 @@
+use std::error::Error;
+use std::path::Path;
+
 pub mod internal {
     pub struct SpanGuard;
 }
@@ -24,8 +27,8 @@ macro_rules! profile_section {
 pub fn clear() {}
 
 #[inline(always)]
-pub fn to_svg<W: std::io::Write>(_writer: &mut W) -> Result<(), std::convert::Infallible> {
-    Ok(())
+pub fn save<P: AsRef<Path>>(_path: P) -> Result<(), Box<dyn Error>> {
+    Err("Firestorm not enabled")?
 }
 
 /// Returns whether or not firestorm is enabled
