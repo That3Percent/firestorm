@@ -17,7 +17,7 @@ documentation = "https://docs.rs/firestorm"
 enable_system_time = ["firestorm-enabled/system_time", "firestorm/enable_system_time"]
 
 [dependencies]
-firestorm-enabled = { version="0.4", optional=true }
+firestorm-enabled = { version="0.4.3", optional=true }
 firestorm = { version="0.3", optional=true }
 
 [dev-dependencies]

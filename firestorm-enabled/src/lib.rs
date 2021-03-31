@@ -188,10 +188,14 @@ fn lines(mode: Mode) -> Vec<String> {
                 let mut lines = Vec::new();
                 if let Some(item) = collapsed.next() {
                     let mut name = item.0.clone();
-                    lines.push(format_line(&name, &item.1).unwrap());
+                    if let Some(line) = format_line(&name, &item.1) {
+                        lines.push(line);
+                    }
                     for item in collapsed {
                         name = format!("{};{}", name, &item.0);
-                        lines.push(format_line(&name, &item.1).unwrap());
+                        if let Some(line) = format_line(&name, &item.1) {
+                            lines.push(line);
+                        }
                     }
                 }
                 lines

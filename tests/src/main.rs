@@ -6,6 +6,11 @@ fn sleep(secs: u64) {
     std::thread::sleep(Duration::from_secs(secs))
 }
 
+#[inline]
+fn zero() {
+    profile_fn!(zero);
+}
+
 fn own_3_twice_call() {
     profile_fn!(own_3_twice_call);
 
@@ -13,6 +18,7 @@ fn own_3_twice_call() {
     sleep(2);
     std::thread::sleep(Duration::from_secs(1));
     call();
+    zero();
 }
 
 fn call() {
