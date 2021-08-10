@@ -26,7 +26,7 @@ macro_rules! profile_fn {
                 }
             );
             $crate::internal::start(event_data);
-            $crate::internal::SpanGuard
+            $crate::internal::SpanGuard::new()
         };
     };
 }
@@ -42,7 +42,7 @@ macro_rules! profile_method {
                 }
             );
             $crate::internal::start(event_data);
-            $crate::internal::SpanGuard
+            $crate::internal::SpanGuard::new()
         };
     };
 }
@@ -56,7 +56,7 @@ macro_rules! profile_section {
                 name: &stringify!($name),
             });
             $crate::internal::start(event_data);
-            $crate::internal::SpanGuard
+            $crate::internal::SpanGuard::new()
         };
     };
 }
