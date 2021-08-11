@@ -5,6 +5,7 @@ members = [
     "firestorm-core",
     "tests"
 ]
+resolver = "2"
 
 [patch.crates-io]
 firestorm = { path = "firestorm" }

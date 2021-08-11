@@ -1,6 +1,6 @@
 [package]
 name = "firestorm"
-version = "0.4.6"
+version = "0.5.0"
 authors = ["Zac Burns <That3Percent@gmail.com>"]
 edition = "2018"
 license = "MIT"
@@ -17,8 +17,10 @@ documentation = "https://docs.rs/firestorm"
 enable_system_time = ["firestorm-enabled/system_time", "firestorm/enable_system_time"]
 
 [dependencies]
-firestorm-enabled = { version="0.4.3", optional=true }
-firestorm = { version="0.3", optional=true }
+firestorm-enabled = { version="0.5.0", optional=true }
+# Each version enables the previous, so that even if multiple versions of the API
+# are used then the underlying profiling data is shared rather than having gaps.
+firestorm = { version="0.4", optional=true }
 
 [dev-dependencies]
 criterion = "0.3"

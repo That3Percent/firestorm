@@ -2,7 +2,29 @@ use std::error::Error;
 use std::path::Path;
 
 pub mod internal {
-    pub struct SpanGuard;
+    use std::marker::PhantomData;
+    // See also 6cb371a0-d6f0-48be-87d2-8d824b82e0e7
+    struct Unsend(PhantomData<*const ()>);
+    impl Unsend {
+        #[inline(always)]
+        fn new() -> Self {
+            Self(PhantomData)
+        }
+    }
+    unsafe impl Sync for Unsend {}
+    pub struct SpanGuard(Unsend);
+    impl SpanGuard {
+        #[inline(always)]
+        pub fn new() -> Self {
+            Self(Unsend::new())
+        }
+    }
+
+    // Ensure that SpanGuard implements the same traits as the enabled version
+    impl Drop for SpanGuard {
+        #[inline(always)]
+        fn drop(&mut self) {}
+    }
 }
 
 #[macro_export]
@@ -19,7 +41,7 @@ macro_rules! profile_method {
 macro_rules! profile_section {
     ($name:ident) => {
         #[allow(unused_variables)]
-        let $name = $crate::internal::SpanGuard;
+        let $name = $crate::internal::SpanGuard::new();
     };
 }
 
