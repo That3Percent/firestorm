@@ -1,5 +1,16 @@
 Firestorm is the low-overhead intrusive flamegraph profiler for Rust.
 
+[![Crates.io][crates-badge]][crates-url]
+[![Documentation][docs-badge]][docs-url]
+[![MIT licensed][mit-badge]][mit-url]
+
+[crates-badge]: https://img.shields.io/crates/v/firestorm.svg
+[crates-url]: https://crates.io/crates/firestorm
+[docs-badge]: https://docs.rs/firestorm/badge.svg
+[docs-url]: https://docs.rs/firestorm
+[mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg
+[mit-url]: LICENSE
+
 [Tenets](#tenets-of-the-design) of the design
 
 For instrumenting start [here](#instrumenting).
