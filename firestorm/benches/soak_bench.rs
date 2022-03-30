@@ -69,7 +69,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         })
     });
     outer();
-    firestorm::to_svg(&mut std::fs::File::create("flame-graph.svg").unwrap()).unwrap();
+    save("flame-graph").unwrap();
 }
 
 criterion_group!(benches, criterion_benchmark);

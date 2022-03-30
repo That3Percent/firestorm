@@ -14,7 +14,7 @@ documentation = "https://docs.rs/firestorm"
 [features]
 # cpu_time works on nightly, but not sure I want the headache yet.
 #enable_cpu_time = ["firestorm-enabled/cpu_time", "firestorm/enable_cpu_time"]
-enable_system_time = ["firestorm-enabled/system_time", "firestorm/enable_system_time"]
+enable_system_time = ["firestorm-enabled/system_time"]
 
 [dependencies]
 firestorm-enabled = { version="0.5.0", optional=true }
