@@ -11,5 +11,5 @@ cpu_time = ["firestorm-core/cpu_time"]
 system_time = ["firestorm-core/system_time"]
 
 [dependencies]
-inferno = "0.10"
+inferno = "0.11.3"
 firestorm-core = "0.1"

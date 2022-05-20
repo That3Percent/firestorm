@@ -231,9 +231,12 @@ pub fn save<P: AsRef<Path>>(path: P) -> Result<(), Box<dyn Error>> {
         let lines = lines(*mode);
 
         let mut fg_opts = flamegraph::Options::default();
-        fg_opts.count_name = "".to_owned();
         fg_opts.title = "".to_owned();
         fg_opts.hash = true;
+        fg_opts.count_name = "nanoseconds".to_owned();
+        // https://github.com/jonhoo/inferno/issues/243
+        //fg_opts.count_name = "μs".to_owned();
+        //fg_opts.factor = 0.001;
         fg_opts.flame_chart = matches!(mode, Mode::TimeAxis);
         let name = data_dir.join(name.to_string() + ".svg");
         let mut writer = std::fs::File::create(name)?;
